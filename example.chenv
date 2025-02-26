@@ -1,0 +1,11 @@
+env-local() {
+    export DJANGO_DB_NAME=my_local_db
+    export DJANGO_DB_HOST=
+}
+
+env-prod() {
+    export DJANGO_DB_NAME=prod_db
+    export DJANGO_DB_HOST=aws.com
+    export DJANGO_USER=$(op read op://vault/name/username)
+    export DJANGO_PASSWORD=$(op read op://vault/name/password)
+}
