@@ -4,24 +4,36 @@
 #
 # this file must be sourced
 
-# shellcheck source=/dev/null
-[[ -f "$CHENV_PROJECT_FILE" ]] && source "$CHENV_PROJECT_FILE"
+__chenv_get_functions_file_path(){
+    if [[ -n $__CHENV_FILE ]]; then
+        echo "$__CHENV_FILE"
+    elif [[ -f .chenv ]]; then
+        echo .chenv
+    elif [[ -f "$CHENV_FUNCTIONS_FILE" ]]; then
+        echo "$CHENV_FUNCTIONS_FILE"
+    fi
+}
 
 # list the functions declared in the configuration file
 __chenv_list_functions() {
-    bash --noprofile --norc -c "source $CHENV_PROJECT_FILE; declare -F" | cut -w -f 3
+    local file=$(__chenv_get_functions_file_path)
+    bash --noprofile --norc -c "source $file; declare -F" | cut -w -f 3
 }
 
 # function that prints all exported variables except PATH.
 # grep -v CHENV_PROJECT_FILE is used to avoid unsetting the configuration file
 # in the case of people mistakenly using export on the CHENV_PROJECT_FILE variable.
 __chenv_exported_vars() {
+    local file=$(__chenv_get_functions_file_path)
     export -p | cut -d ' ' -f 3 | cut -d = -f 1 | grep -v PATH | grep -v CHENV_PROJECT_FILE
 }
 
 # list the exported variables declared in the configuration file
 __chenv_list_var_names() ( # we use "(" here so we are in a subshell
-    [[ -f "$CHENV_PROJECT_FILE" ]] || return
+    local file=$(__chenv_get_functions_file_path)
+    if  [[ -z "$file" ]]; then
+        return
+    fi
 
     # unset all exported variables except PATH
     # shellcheck disable=SC2046
@@ -33,7 +45,7 @@ __chenv_list_var_names() ( # we use "(" here so we are in a subshell
     }
 
     # source the configuration file and call all the functions
-    source "$CHENV_PROJECT_FILE"
+    source "$file"
     for f in $(__chenv_list_functions); do
         $f
     done
@@ -43,6 +55,13 @@ __chenv_list_var_names() ( # we use "(" here so we are in a subshell
 )
 
 chenv-show() {
+    local file=$(__chenv_get_functions_file_path)
+    if [[ -z "$file" ]]; then
+        echo "No configuration file."
+        return 1
+    fi
+    echo "Configuration file: $file"
+    echo "Environment:"
     for var in $(__chenv_list_var_names); do
         [[ -v "$var" ]] || continue
         if [[ "$1" = "-v" ]]; then
@@ -56,28 +75,33 @@ chenv-show() {
 chenv-unset() {
     # shellcheck disable=SC2046
     unset $(__chenv_list_var_names)
+    unset __CHENV_FILE
 }
 
 chenv() {
-    if ! [[ -f "$CHENV_PROJECT_FILE" ]]; then
-        echo "CHENV_PROJECT_FILE is not set"
+    local file=$(__chenv_get_functions_file_path)
+    if [[ -z "$file" ]]; then
+        echo "No configuration file."
         return 1
     fi
-    eval "$(__chenv_list_functions | fzf --preview "bash -c \"source $CHENV_PROJECT_FILE; declare -f {}\"")"
+    f=$(__chenv_list_functions | fzf -m --preview "bash -c \"source $file; declare -f {}\"")
+    if [[ $? != 0 ]]; then
+        return 1
+    fi
+    . "$file"
+    eval "$f"
+    __CHENV_FILE="$(realpath $file)"
 }
 
-chenv-reload() {
+chenv-load() {
     source "${BASH_SOURCE[0]}"
-    [[ -f "$CHENV_PROJECT_FILE" ]] && source "$CHENV_PROJECT_FILE"
+    source $(__chenv_get_functions_file_path)
 }
 
 chenv-dotenv() (
-    if ! [[ -f "$CHENV_PROJECT_FILE" ]]; then
-        echo "CHENV_PROJECT_FILE is not set"
-        return 1
-    fi
+    local file=$(__chenv_get_functions_file_path)
     if [[ -z "$1" ]]; then
-        f=$(__chenv_list_functions | fzf --preview "bash -c \"source $CHENV_PROJECT_FILE; declare -f {}\"")
+        f=$(__chenv_list_functions | fzf --preview "bash -c \"source $file; declare -f {}\"")
     else
         f=$1
     fi
@@ -92,7 +116,7 @@ chenv-dotenv() (
     }
 
     # source the configuration file and call the requested functions
-    source "$CHENV_PROJECT_FILE"
+    source "$file"
     "$f"
 
     export -p | grep -v PATH | grep -v CHENV_PROJECT_FILE
