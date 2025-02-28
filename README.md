@@ -1,78 +1,59 @@
 # chenv
 
-A tool for managing bash environment variables.
+A tool for managing groups of bash environment variables.
 
-chenv helps handle configurations that are too complex for regular .env files,
+`chenv` helps handle configurations that are too complex for regular `.env` files,
 particularly when dealing with dynamic values from slow secret managers like
 1Password.
 
-When changing environments, chenv shows you the proposed changes before applying them. This preview feature helps prevent configuration mistakes.
-
-Here's a practical example showing different database configurations. We have a configuration to connect to a local database:
-
-```
-DB_NAME=my_local_db
-DB_HOST=
-```
-
-and another to connect to the staging or prod one:
+When changing environments, chenv shows you the proposed changes before applying
+them via `fzf`.
 
 ```
-DB_NAME=prod_db
-DB_HOST=aws.com
-DB_USER=$(op read op://vault/name/username)
-DB_PASSWORD=$(op read op://vault/name/password)
+╭──────────────────────────────────╮╭──────────────────────────────────────────────────╮
+│   env-example-3                  ││ env-example-4 ()                                 │
+│ ▌ env-example-4                  ││ {                                                │
+│                                  ││     export DB_NAME=prod_db;                      │
+│                                  ││     export DB_HOST=aws.com;                      │
+│                                  ││     export USER=$(op read op://vault/name/userna │
+│                                  ││     export PASSWORD=$(op read op://vault/name/pa │
+│                                  ││ }                                                │
+│                                  ││                                                  │
+│                                  ││                                                  │
+╰──────────────────────────────────╯│                                                  │
+╭──────────────────────────────────╮│                                                  │
+│ >                        2/2 (0) ││                                                  │
+╰──────────────────────────────────╯╰──────────────────────────────────────────────────╯
 ```
 
-now you can do this in various ways but with chenv you can preview what will happen:
-
-
-```
-                                ╭──────────────────────────────╮
-                                │ local ()                     │
-                                │ {                            │
-                                │     DB_NAME=my_local_db;     │
-                                │     DB_HOST=                 │
-                                │ }                            │
-                                │                              │
-                                │                              │
-                                │                              │
-  prod                          │                              │
-▌ local                         │                              │
-  2/2 ──────────────────────────│                              │
->                               ╰──────────────────────────────╯
-```
+Groups of environment variables are defined in a `.chenv` file in the current
+directory as regular bash functions:
 
 ```
-                                ╭──────────────────────────────╮
-                                │ prod ()                      │
-                                │ {                            │
-                                │     DB_NAME=prod_db;         │
-                                │     DB_HOST=aws.com;         │
-                                │     USER=$(op read op://v    │
-                                │     PASSWORD=$(op read op    │
-                                │ }                            │
-                                │                              │
-▌ prod                          │                              │
-  local                         │                              │
-  2/2 ──────────────────────────│                              │
->                               ╰──────────────────────────────╯
+env-example-4() {
+    export __CHENV_FUNC=4
+    export DB_NAME=prod_db
+    export DB_HOST=aws.com
+    export USER=$(op read op://vault/name/username)
+    export PASSWORD=$(op read op://vault/name/password)
+}
 ```
+
+This file is sourced to the current shell and the functions are called by `chenv`.
+
+`chenv-show` will precisely show the current active configuration by looking at the
+variables of the current shell that are defined in some of the functions.
 
 ## Available commands
 
-* `chenv`: choose between the available sets
+* `chenv`: choose between the available environment sets
 * `chenv-show`: show the active environment (passwords hidden unless `-v`)
-* `chenv-unste`: unset the active environment
+* `chenv-unset`: unset the active environment
+* `chenv-load`: load the configuration file in the current directory.
+* `chenv-export`: exports a function for the chosen set.
 
 You can also directly call the function defined in the configuration.
 
 ## Installation
 
-Copy the `chenv.sh` script somewhere and source it in your bash initialization.
-
-## Configuration
-
-Define a script containing functions that export your variables and set the
-`CHENV_PROJECT_FILE` variable to point at it. Important: do not export the
-`CHENV_PROJECT_FILE` variable.
+Copy the `chenv.sh` script somewhere and source it. You may want to do this in your bash initialization.

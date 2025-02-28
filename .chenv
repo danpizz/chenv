@@ -1,13 +1,11 @@
 # example configuration  file
 
-env-example-3() {
+env-example-1() {
     export DB_NAME=my_local_db
     export DB_HOST=
-    export __CHENV_FUNC=3
 }
 
-env-example-4() {
-    export __CHENV_FUNC=4
+env-example-2() {
     export DB_NAME=prod_db
     export DB_HOST=aws.com
     export USER=$(op read op://vault/name/username)

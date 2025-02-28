@@ -5,12 +5,12 @@
 # this file must be sourced
 
 __chenv_get_functions_file_path(){
-    if [[ -n $__CHENV_FILE ]]; then
-        echo "$__CHENV_FILE"
+    if [[ -n $__chenv_current_file ]]; then
+        echo "$__chenv_current_file"
     elif [[ -f .chenv ]]; then
         echo .chenv
-    elif [[ -f "$CHENV_FUNCTIONS_FILE" ]]; then
-        echo "$CHENV_FUNCTIONS_FILE"
+    elif [[ -f "$CHENV_FILE" ]]; then
+        echo "$CHENV_FILE"
     fi
 }
 
@@ -20,12 +20,12 @@ __chenv_list_functions() {
     bash --noprofile --norc -c "source $file; declare -F" | cut -w -f 3
 }
 
-# function that prints all exported variables except PATH.
-# grep -v CHENV_PROJECT_FILE is used to avoid unsetting the configuration file
-# in the case of people mistakenly using export on the CHENV_PROJECT_FILE variable.
+# function that prints all exported variables except PATH and CHENV_FILE.
+# grep -v CHENV_FILE is used to avoid unsetting the configuration file
+# in the case of people mistakenly using export on the CHENV_FILE variable.
 __chenv_exported_vars() {
     local file=$(__chenv_get_functions_file_path)
-    export -p | cut -d ' ' -f 3 | cut -d = -f 1 | grep -v PATH | grep -v CHENV_PROJECT_FILE
+    export -p | cut -d ' ' -f 3 | cut -d = -f 1 | grep -v PATH | grep -v CHENV_FILE
 }
 
 # list the exported variables declared in the configuration file
@@ -75,7 +75,7 @@ chenv-show() {
 chenv-unset() {
     # shellcheck disable=SC2046
     unset $(__chenv_list_var_names)
-    unset __CHENV_FILE
+    unset __chenv_current_file
 }
 
 chenv() {
@@ -84,13 +84,20 @@ chenv() {
         echo "No configuration file."
         return 1
     fi
-    f=$(__chenv_list_functions | fzf -m --preview "bash -c \"source $file; declare -f {}\"")
+    f=$(__chenv_list_functions | \
+        fzf -m \
+            --layout=reverse-list \
+            --style=full \
+            --height=10% \
+            --min-height=10+ \
+            --preview-window=60% \
+            --preview "bash -c \"source $file; declare -f {}\"")
     if [[ $? != 0 ]]; then
         return 1
     fi
     . "$file"
     eval "$f"
-    __CHENV_FILE="$(realpath $file)"
+    __chenv_current_file="$(realpath $file)"
 }
 
 chenv-load() {
@@ -98,7 +105,7 @@ chenv-load() {
     source $(__chenv_get_functions_file_path)
 }
 
-chenv-dotenv() (
+chenv-export() (
     local file=$(__chenv_get_functions_file_path)
     if [[ -z "$1" ]]; then
         f=$(__chenv_list_functions | fzf --preview "bash -c \"source $file; declare -f {}\"")
@@ -119,5 +126,5 @@ chenv-dotenv() (
     source "$file"
     "$f"
 
-    export -p | grep -v PATH | grep -v CHENV_PROJECT_FILE
+    export -p | grep -v PATH | grep -v CHENV_FILE
 )
