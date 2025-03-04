@@ -25,7 +25,7 @@ __chenv_list_functions() {
 # in the case of people mistakenly using export on the CHENV_FILE variable.
 __chenv_exported_vars() {
     local file=$(__chenv_get_functions_file_path)
-    export -p | cut -d ' ' -f 3 | cut -d = -f 1 | grep -v PATH | grep -v CHENV_FILE
+    export -p | cut -d ' ' -f 3 | cut -d = -f 1 | grep -v "^PATH$" | grep -v "^CHENV_FILE$"
 }
 
 # list the exported variables declared in the configuration file
