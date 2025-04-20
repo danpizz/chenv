@@ -1,11 +1,18 @@
 # example configuration  file
+#
+# shellcheck shell=bash source=/dev/null
+
+# include a local version of the file, if present
+[ -f .chenv-local ] && source .chenv-local
 
 env-example-1() {
+    export TAG="a"
     export DB_NAME=my_local_db
     export DB_HOST=
 }
 
 env-example-2() {
+    export TAG="b"
     export DB_NAME=prod_db
     export DB_HOST=aws.com
     export USER=$(op read op://vault/name/username)

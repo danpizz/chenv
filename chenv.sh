@@ -4,7 +4,7 @@
 #
 # this file must be sourced
 
-__chenv_get_functions_file_path(){
+__chenv_get_functions_file_path() {
     if [[ -n $__chenv_current_file ]]; then
         echo "$__chenv_current_file"
     elif [[ -f .chenv ]]; then
@@ -16,22 +16,27 @@ __chenv_get_functions_file_path(){
 
 # list the functions declared in the configuration file
 __chenv_list_functions() {
-    local file=$(__chenv_get_functions_file_path)
+    local file
+    file=$(__chenv_get_functions_file_path)
     bash --noprofile --norc -c "source $file; declare -F" | cut -w -f 3
 }
 
-# function that prints all exported variables except PATH and CHENV_FILE.
-# grep -v CHENV_FILE is used to avoid unsetting the configuration file
-# in the case of people mistakenly using export on the CHENV_FILE variable.
+# function that prints all the variables that the current shell exports except
+# PATH and CHENV_FILE. 
+# The "grep -v CHENV_FILE" part is used to avoid unsetting the
+# configuration file in the case of people mistakenly using export on the
+# CHENV_FILE variable.
 __chenv_exported_vars() {
-    local file=$(__chenv_get_functions_file_path)
+    local file
+    file=$(__chenv_get_functions_file_path)
     export -p | cut -d ' ' -f 3 | cut -d = -f 1 | grep -v "^PATH$" | grep -v "^CHENV_FILE$"
 }
 
 # list the exported variables declared in the configuration file
 __chenv_list_var_names() ( # we use "(" here so we are in a subshell
-    local file=$(__chenv_get_functions_file_path)
-    if  [[ -z "$file" ]]; then
+    local file
+    file=$(__chenv_get_functions_file_path)
+    if [[ -z "$file" ]]; then
         return
     fi
 
@@ -41,7 +46,7 @@ __chenv_list_var_names() ( # we use "(" here so we are in a subshell
 
     # create a phony op command to avoid calling 1Password
     op() {
-       :
+        :
     }
 
     # source the configuration file and call all the functions
@@ -67,7 +72,7 @@ chenv-show() {
         if [[ "$1" = "-v" ]]; then
             echo "$var=${!var}"
         else
-            echo "$var=${!var}" | sed -r 's/(^.*PASSWORD=|^.*PASS=)(.*)/\1***/'
+            echo "$var=${!var}" | sed -r 's/(^.*PASSWORD=|^.*PASS=|^.*SECRET.*=)(.*)/\1***/'
         fi
     done
 }
