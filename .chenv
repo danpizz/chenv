@@ -6,15 +6,18 @@
 [ -f .chenv-local ] && source .chenv-local
 
 env-example-1() {
-    export TAG="a"
+    export TAG="a1"
     export DB_NAME=my_local_db
     export DB_HOST=
+    export MY_SECRET=xxx
 }
 
 env-example-2() {
     export TAG="b"
     export DB_NAME=prod_db
     export DB_HOST=aws.com
-    export USER=$(op read op://vault/name/username)
-    export PASSWORD=$(op read op://vault/name/password)
+    export DB_USER=$(op read op://vault/name/username)
+    export DB_PASSWORD=$(op read op://vault/name/password)
 }
+:
+
