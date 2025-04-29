@@ -56,7 +56,7 @@ chenv-show() {
         echo "the chenv config file \"${__chenv_config}\" is missing (deleted?)."
         return 1
     fi
-    if [[ ${__chenv_config_sha:=} != $(sha512sum --quiet "$__chenv_config") ]]; then
+    if [[ ${__chenv_config_sha:=} != $(sha512sum "$__chenv_config" | cut -d ' ' -f 1) ]]; then
         echo "The chenv config file \"${__chenv_config}\" was modified, the following info may not be accurate."
     fi
 
@@ -91,7 +91,7 @@ chenv() {
         return 1
     fi
 
-    file_sha="$(sha512sum --quiet "$file")"
+    file_sha="$(sha512sum "$file" | cut -d ' ' -f 1)"
     val="export __chenv_config=$file;export __chenv_config_sha=$file_sha;$chosen_functions"
     exec bash --rcfile <(echo "source ~/.bashrc; source $file; eval $val") -i
 }
