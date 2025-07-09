@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-DEFAULT_CONFIG_FILE="$(realpath -q ./.chenv)"
+DEFAULT_CONFIG_FILE="$(realpath -q ./.ssa)"
 
 # list the functions declared in the file provided as parameter
 list_functions() {
@@ -46,18 +46,18 @@ list_exported_var_names() ( # we use "(" here so we are in a subshell
     exported_vars
 )
 
-chenv-show() {
+ssa-show() {
     arg_verbose=${1:-}
     if [[ -z ${__chenv_config:=} ]]; then
-        echo "chenv was not executed in this shell."
+        echo "ssa was not executed in this shell."
         return 1
     fi
     if [[ ! -f $__chenv_config ]]; then
-        echo "the chenv config file \"${__chenv_config}\" is missing (deleted?)."
+        echo "the ssa config file \"${__chenv_config}\" is missing (deleted?)."
         return 1
     fi
     if [[ ${__chenv_config_sha:=} != $(sha512sum "$__chenv_config" | cut -d ' ' -f 1) ]]; then
-        echo "The chenv config file \"${__chenv_config}\" was modified, the following info may not be accurate."
+        echo "The ssa config file \"${__chenv_config}\" was modified, the following info may not be accurate."
     fi
 
     echo "Configuration file: $__chenv_config"
@@ -72,7 +72,7 @@ chenv-show() {
     done
 }
 
-chenv() {
+ssa() {
     file=$"$DEFAULT_CONFIG_FILE"
 
     if [[ ! -f "$file" ]]; then
@@ -97,7 +97,7 @@ chenv() {
 }
 
 if [[ $# -eq 0 ]]; then
-    chenv
+    ssa
     exit 0
 fi
 
@@ -105,7 +105,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -s | --show)
             shift
-            chenv-show "$@"
+            ssa-show "$@"
             ;;
         *) break ;;
     esac

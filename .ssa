@@ -3,21 +3,19 @@
 # shellcheck shell=bash source=/dev/null
 
 # include a local version of the file, if present
-[ -f .chenv-local ] && source .chenv-local
+[ -f .ssa-local ] && source .ssa-local
 
-env-example-1() {
+group-dev() {
     export TAG="a1"
     export DB_NAME=my_local_db
     export DB_HOST=
     export MY_SECRET=xxx
 }
 
-env-example-2() {
+group-prod() {
     export TAG="b"
     export DB_NAME=prod_db
     export DB_HOST=aws.com
     export DB_USER=$(op read op://vault/name/username)
     export DB_PASSWORD=$(op read op://vault/name/password)
 }
-:
-
