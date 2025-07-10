@@ -96,6 +96,26 @@ ssa() {
     exec bash --rcfile <(echo "source ~/.bashrc; source $file; eval $val") -i
 }
 
+help_text() {
+    cat <<EOF
+Subshella (ssa) - Bash environment group management
+
+Usage:
+  ssa                Launch interactive menu to select and apply environment groups
+  ssa -s [ -v ]      Show current environment (with -v, show secrets)
+  ssa -h, --help     Show this help message
+
+Environment groups are defined as Bash functions in a .ssa file in the current directory.
+
+Options:
+  -s, --show         Show the currently active environment configuration
+  -v                 Show all values, including secrets (use with -s)
+  -h, --help         Show this help message
+
+See README.md for more details.
+EOF
+}
+
 if [[ $# -eq 0 ]]; then
     ssa
     exit 0
@@ -106,6 +126,10 @@ while [[ $# -gt 0 ]]; do
         -s | --show)
             shift
             ssa-show "$@"
+            ;;
+        -h | --help)
+            help_text
+            exit 0
             ;;
         *) break ;;
     esac
